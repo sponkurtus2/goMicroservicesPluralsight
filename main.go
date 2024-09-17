@@ -8,11 +8,15 @@ import (
 	"time"
 )
 
+// This is a custom type of an http Handler
 type myHandler string
 
+// This is a function for myHandler custom type
 func (mh myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// We add a header by providing a key and it's value
 	w.Header().Add("X-Powered-By", "Matcha")
 
+	// And we also add some Cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session-id",
 		Value:   "12345",
@@ -21,12 +25,14 @@ func (mh myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusAccepted)
 
+	// With this we print the current path of the url
 	_, err := fmt.Fprintln(w, string(mh))
 	if err != nil {
 		http.Error(w, "Internal server error: ", http.StatusInternalServerError)
 		log.Println("Err -> ", err)
 	}
 
+	// Print the current headers
 	_, err = fmt.Fprintln(w, r.Header)
 	if err != nil {
 		log.Println("Error on header -> ", err)
@@ -35,8 +41,10 @@ func (mh myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
+	// We handle a function with a handler (myHandler)
 	http.Handle("/", myHandler("Customer service"))
 
+	// We handle an anonymous func
 	http.HandleFunc("/service", func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprintln(w, "Customer service")
 		if err != nil {
@@ -44,6 +52,7 @@ func main() {
 		}
 	})
 
+	// We handle a normal function
 	http.HandleFunc("/url/", customHandlerFunc())
 
 	// This is the way to create a default server
@@ -55,6 +64,7 @@ func main() {
 	customServer(":3030")
 }
 
+// Instead of using a default function, we create our own.
 func customHandlerFunc() func(w http.ResponseWriter, r *http.Request) {
 	var handlerFunc http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprintln(w, r.URL.String())
