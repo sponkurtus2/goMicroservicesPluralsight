@@ -59,7 +59,7 @@ func main() {
 
 	// Handle our printing function
 	http.HandleFunc("/file", serveFprint("./pets.csv"))
-	// http.HandleFunc("/fileV2", serveServeFile("./pets.csv"))
+	http.HandleFunc("/fileV2", serveServeFile("./pets.csv"))
 
 	// This is the way to create a default server
 	// log.Fatal(http.ListenAndServe(":8080", nil))
@@ -128,42 +128,30 @@ func customServer(Addr string) {
 
 func serveFprint(fileName string) func(w http.ResponseWriter, r *http.Request) {
 
-	customerFile, err := os.Open(fileName)
-	if err != nil {
-		log.Fatal("Error opening file -> ", err)
-	}
-
-	defer func() {
-		if err := customerFile.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	newData := customerFile
-
-	// We only need to do this if we want to print our data using fmt.Fprint
-	// This happens since io.Copy streams directly from the file and doesn't need to
-	// read all the data before printing it out.
-	//data, err := io.ReadAll(customerFile)
-	//if err != nil {
-	//	log.Fatal("Error reading data -> ", err)
-	//}
-
-	var contentDataFunc http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-		// This is the long way by using fmt.Fprint
-		//_, err := fmt.Fprint(w, string(data))
-		//if err != nil {
-		//	log.Fatal("Error printing data -> ", err)
-		//}
-
-		// We can save time by using io.Copy
-		_, err := io.Copy(w, newData)
+	return func(w http.ResponseWriter, r *http.Request) {
+		customerFile, err := os.Open(fileName)
 		if err != nil {
-			log.Fatal("Error printing data in serveFprint()-> ", err)
+			log.Fatal("File not fount -> err", err)
+		}
+
+		defer func() {
+			if err := customerFile.Close(); err != nil {
+				panic(err)
+			}
+		}()
+
+		// We only need to do this if we want to print our data using fmt.Fprint
+		// This happens since io.Copy streams directly from the file and doesn't need to
+		// read all the data before printing it out.
+		//data, err := io.ReadAll(customerFile)
+		//if err != nil {
+		//	log.Fatal("Error reading data -> ", err)
+		//}
+		_, err = io.Copy(w, customerFile)
+		if err != nil {
+			log.Fatal("Error serving the data -> ", err)
 		}
 	}
-
-	return contentDataFunc
 }
 
 func serveServeFile(filename string) func(w http.ResponseWriter, r *http.Request) {
@@ -172,3 +160,5 @@ func serveServeFile(filename string) func(w http.ResponseWriter, r *http.Request
 	}
 	return contentToReturn
 }
+
+func
