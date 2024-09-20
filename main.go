@@ -60,6 +60,11 @@ func main() {
 	// Handle our printing function
 	http.HandleFunc("/file", serveFprint("./pets.csv"))
 	http.HandleFunc("/fileV2", serveServeFile("./pets.csv"))
+	http.HandleFunc("/filev3", serveServeContent("./pets.csv"))
+
+	// https://localhost:3030/files/customer.csv
+	http.Handle("/files/", http.StripPrefix("/files/",
+		http.FileServer(http.Dir("."))))
 
 	// This is the way to create a default server
 	// log.Fatal(http.ListenAndServe(":8080", nil))
@@ -161,4 +166,29 @@ func serveServeFile(filename string) func(w http.ResponseWriter, r *http.Request
 	return contentToReturn
 }
 
-func
+// Serve Content is used to directly download a file to the device, once you enter the url associated to the Serve Content
+// Function, the file will start to download
+func serveServeContent(filename string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		customerFile, err := os.Open(filename)
+		if err != nil {
+			log.Fatal("Could'nt find file -> ", err)
+		}
+
+		defer func() {
+			if err := customerFile.Close(); err != nil {
+				log.Fatal("Error closing the file -> ", err)
+			}
+		}()
+
+		// In order to get the modification time from our file, we first need to get the data from the file
+		fileInfo, err := os.Stat(filename)
+		if err != nil {
+			log.Fatal("Error reading file stats -> ", err)
+		}
+		// Once we read all the file stats, we can get the modification time
+		lastModificationTime := fileInfo.ModTime()
+
+		http.ServeContent(w, r, "customer_data.csv", lastModificationTime, customerFile)
+	}
+}
